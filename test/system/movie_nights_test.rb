@@ -16,7 +16,12 @@ class MovieNightsTest < ApplicationSystemTestCase
 
     visit new_movie_night_path
     select "Inception", from: "movie_night[movie_id]"
-    fill_in "Date & Time", with: "04/01/2026\t08:00PM"
+    page.execute_script(<<~JS)
+      const el = document.getElementById('movie_night_scheduled_at');
+      el.value = '2026-04-01T20:00';
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    JS
     fill_in "movie_night[notes]", with: "Bring popcorn"
     click_on "Create Event"
 

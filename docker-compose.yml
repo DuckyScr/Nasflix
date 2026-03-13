@@ -1,0 +1,38 @@
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: nasflix_production
+      MYSQL_USER: nasflix
+      MYSQL_PASSWORD: nasflix_password
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  web:
+    build: .
+    restart: always
+    environment:
+      - RAILS_ENV=production
+      - DATABASE_URL=mysql2://root:password@db/nasflix_production
+      - NASFLIX_DATABASE_PASSWORD=password
+      - DB_HOST=db
+      - RAILS_MASTER_KEY=${RAILS_MASTER_KEY:-3a737f64423a9f1274e44b046949d3c6}
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE:-2d5ee325e1ed019c4a904d1b38640223781111e3f54dfc2214dc02c16b4aa9635d687c07dc0c7773cf71d7d2186095e2c06199256eed8792515ddfb2c140a997}
+    ports:
+      - "8080:80"
+    volumes:
+      - ./storage:/rails/storage
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data:

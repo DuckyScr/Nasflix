@@ -24,7 +24,7 @@
             <i data-lucide="play" class="icon-inline"></i> Play
           <% end %>
         <% end %>
-        
+
         <%= render "watchlist_entries/button", movie: hero, watchlisted: @watchlisted_movie_ids.include?(hero.id), style: "hero" %>
       </div>
     </div>
@@ -102,7 +102,14 @@
   <% else %>
     <div class="empty-state">
       <p>No movies yet. Upload your first movie!</p>
-      <%= link_to "+ Add Movie", new_movie_path, class: "btn btn-primary" %>
+      <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;">
+        <%= link_to "+ Add Movie", new_movie_path, class: "btn btn-primary" %>
+        <% if logged_in? && current_user.admin? %>
+          <%= button_to admin_load_demo_path, method: :post, class: "btn btn-secondary", data: { turbo_confirm: "Load demo data into the app?" } do %>
+            <i data-lucide="database" class="icon-inline"></i> Load Demo Data
+          <% end %>
+        <% end %>
+      </div>
     </div>
   <% end %>
 </div>

@@ -15,7 +15,7 @@ default: &default
   max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   username: root
   password:
-  socket: /tmp/mysql.sock
+  # socket: /tmp/mysql.sock
 
 development:
   <<: *default
@@ -57,8 +57,9 @@ test:
 production:
   primary: &primary_production
     <<: *default
+    host: <%= ENV.fetch("DB_HOST", "db") %>
     database: nasflix_production
-    username: nasflix
+    username: root
     password: <%= ENV["NASFLIX_DATABASE_PASSWORD"] %>
   cache:
     <<: *primary_production

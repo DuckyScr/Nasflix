@@ -62,3 +62,5 @@ group :test do
 end
 
 gem "streamio-ffmpeg", "~> 3.0"
+
+gem "image_processing", "~> 1.2"
