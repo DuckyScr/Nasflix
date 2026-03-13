@@ -12,6 +12,7 @@ class UsersController < ApplicationController
 
   def create
     @user = User.new(user_params)
+    @user.role = params[:user][:role] if current_user.admin? && params[:user][:role].present?
     if @user.save
       redirect_to users_path, notice: "User '#{@user.name}' was successfully created."
     else
@@ -19,11 +20,8 @@ class UsersController < ApplicationController
     end
   end
 
-  def edit
-  end
-
   def update
-    if @user.update(user_params)
+    if @user.update(user_params.except(:role))
       redirect_to users_path, notice: "User '#{@user.name}' was successfully updated."
     else
       render :edit, status: :unprocessable_entity
@@ -46,6 +44,6 @@ class UsersController < ApplicationController
   end
 
   def user_params
-    params.require(:user).permit(:name, :email, :password, :password_confirmation, :role)
+    params.require(:user).permit(:name, :email, :password, :password_confirmation)
   end
 end
