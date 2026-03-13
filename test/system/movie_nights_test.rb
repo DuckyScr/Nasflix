@@ -2,8 +2,8 @@ require "application_system_test_case"
 
 class MovieNightsTest < ApplicationSystemTestCase
   setup do
-    @host = User.create!(name: "Host User", email: "host@example.com", password: "password", role: "parent")
-    @invitee = User.create!(name: "Invitee", email: "invitee@example.com", password: "password", role: "child")
+    @host = User.create!(name: "Host User", email: "host_movienight@test.com", password: "password", role: "parent")
+    @invitee = User.create!(name: "Invitee", email: "invitee_movienight@test.com", password: "password", role: "child")
     @movie = Movie.create!(title: "Inception", description: "Dreams", year: 2010, genre: "Sci-Fi")
   end
 
@@ -16,12 +16,15 @@ class MovieNightsTest < ApplicationSystemTestCase
 
     visit new_movie_night_path
     select "Inception", from: "movie_night[movie_id]"
-    page.execute_script(<<~JS)
-      const el = document.getElementById('movie_night_scheduled_at');
+
+    # Set datetime using JavaScript - datetime-local expects YYYY-MM-DDTHH:MM
+    page.execute_script("
+      var el = document.getElementById('movie_night_scheduled_at');
       el.value = '2026-04-01T20:00';
-      el.dispatchEvent(new Event('change', { bubbles: true }));
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-    JS
+      el.dispatchEvent(new Event('input', {bubbles: true}));
+      el.dispatchEvent(new Event('change', {bubbles: true}));
+    ")
+
     fill_in "movie_night[notes]", with: "Bring popcorn"
     click_on "Create Event"
 

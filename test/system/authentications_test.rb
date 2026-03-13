@@ -2,7 +2,7 @@ require "application_system_test_case"
 
 class AuthenticationsTest < ApplicationSystemTestCase
   setup do
-    @user = User.create!(name: "Test User", email: "test@example.com", password: "password", role: "parent")
+    @user = User.create!(name: "Test User", email: "test_auth@test.com", password: "password", role: "parent")
   end
 
   test "user can login and logout" do

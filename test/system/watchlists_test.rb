@@ -2,7 +2,7 @@ require "application_system_test_case"
 
 class WatchlistsTest < ApplicationSystemTestCase
   setup do
-    @user = User.create!(name: "Test User", email: "test@example.com", password: "password", role: "parent")
+    @user = User.create!(name: "Test User", email: "test_watchlist@test.com", password: "password", role: "parent")
     @movie = Movie.create!(title: "The Matrix", description: "Neo", year: 1999, genre: "Sci-Fi")
   end
 
