@@ -3,14 +3,14 @@ services:
     image: mysql:8.0
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: nasflix_production
-      MYSQL_USER: nasflix
-      MYSQL_PASSWORD: nasflix_password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-nasflix_production}
+      MYSQL_USER: ${MYSQL_USER:-nasflix}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppassword"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -21,11 +21,11 @@ services:
     restart: always
     environment:
       - RAILS_ENV=production
-      - DATABASE_URL=mysql2://root:password@db/nasflix_production
-      - NASFLIX_DATABASE_PASSWORD=password
+      - DATABASE_URL=mysql2://root:${MYSQL_ROOT_PASSWORD}@db/${MYSQL_DATABASE:-nasflix_production}
+      - NASFLIX_DATABASE_PASSWORD=${MYSQL_PASSWORD}
       - DB_HOST=db
-      - RAILS_MASTER_KEY=${RAILS_MASTER_KEY:-3a737f64423a9f1274e44b046949d3c6}
-      - SECRET_KEY_BASE=${SECRET_KEY_BASE:-2d5ee325e1ed019c4a904d1b38640223781111e3f54dfc2214dc02c16b4aa9635d687c07dc0c7773cf71d7d2186095e2c06199256eed8792515ddfb2c140a997}
+      - RAILS_MASTER_KEY=${RAILS_MASTER_KEY}
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
     ports:
       - "8080:80"
     volumes:

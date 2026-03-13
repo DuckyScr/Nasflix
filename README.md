@@ -19,7 +19,7 @@
 
 ---
 
-## 🐳 Quick Start: Docker Production Setup
+## 🐳 Docker Production Setup
 
 The easiest way to get Nasflix running is via Docker Compose.
 
@@ -27,25 +27,31 @@ The easiest way to get Nasflix running is via Docker Compose.
 - Docker
 - Docker Compose
 
-### 1. Start the services
+### 1. Setup Environment Variables
 
-In the root of the project directory, simply run:
+Copy the example environment file and fill in your values:
 
 ```bash
-docker-compose up -d --build
+cp .env.example .env
+```
+
+Generate a secure secret key for Rails:
+```bash
+rails secret
+# Copy the output to SECRET_KEY_BASE in .env
+```
+
+### 2. Start the services
+
+```bash
+docker compose up -d --build
 ```
 
 This will start two containers:
 1. `db`: A MySQL 8.0 instance holding your data.
 2. `web`: The Nasflix application running on port `8080`.
 
-### 2. Setup the Database
-
-Once the containers are running, you need to prepare the database for the first time:
-
-```bash
-docker-compose exec web bin/rails db:prepare
-```
+The database will be automatically migrated on startup.
 
 ### 3. Access the App
 
@@ -54,8 +60,18 @@ Open your browser and navigate to:
 
 *The first time you load the app, you will be redirected to an onboarding screen to create your Admin account. From there, you can configure your library and load demo data instantly.*
 
+### Resetting the Database
+
+To start fresh with a new database:
+
+```bash
+docker compose down -v    # -v removes all data
+docker compose up -d --build
+```
+
 ### Persistent Storage
-In production, your uploaded videos are saved in the local `storage/` directory, which is mapped as a Docker volume to persist across container restarts.
+
+Uploaded videos are saved in the local `storage/` directory, which is mapped as a Docker volume to persist across container restarts.
 
 ---
 
