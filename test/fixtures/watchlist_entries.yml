@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  movie: one
+  start_date: 2026-03-09
+  end_date: 2026-03-09
+  status: MyString
+  notes: MyText
+
+two:
+  movie: two
+  start_date: 2026-03-09
+  end_date: 2026-03-09
+  status: MyString
+  notes: MyText

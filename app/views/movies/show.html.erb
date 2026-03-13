@@ -1,0 +1,298 @@
+<div class="movie-detail">
+  <!-- Video Player -->
+  <% video_record = @movie.series? ? @current_episode : @movie %>
+  <% if video_record&.video&.attached? %>
+    <% if video_record.video.content_type == "video/mp4" %>
+      <div class="detail-player">
+        <video width="100%" controls crossorigin playsinline id="movie-player" 
+               data-movie-id="<%= @movie.id %>" 
+               data-episode-id="<%= @current_episode&.id %>"
+               data-start-time="<%= @progress&.current_time || 0 %>"
+               <%= "poster='#{url_for(video_record.thumbnail)}'" if video_record.thumbnail.attached? %>>
+          <source src="<%= url_for(video_record.video) %>">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+    <% else %>
+      <div class="detail-player placeholder-player" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 4rem 2rem;">
+        <i data-lucide="loader-2" style="width: 3rem; height: 3rem; animation: spin 2s linear infinite; margin-bottom: 1.5rem; color: var(--accent);"></i>
+        <h3 style="margin-bottom: 1rem;">Converting Video Format...</h3>
+        <p style="color: var(--text-muted); max-width: 450px; line-height: 1.5; margin-bottom: 2rem;">
+          Your video is currently being optimized into MP4 format for the best streaming experience across all browsers. 
+        </p>
+        
+        <div class="conversion-progress-container" style="width: 100%; max-width: 400px; background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border);">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;">
+            <span id="conversion-status-text" style="color: var(--text-primary);">Processing</span>
+            <span id="conversion-percentage" style="color: var(--accent);">0%</span>
+          </div>
+          <div style="width: 100%; height: 8px; background: rgba(0,0,0,0.5); border-radius: 4px; overflow: hidden;">
+            <div id="conversion-progress-bar" style="width: 0%; height: 100%; background: var(--accent); transition: width 0.3s ease; border-radius: 4px;"></div>
+          </div>
+        </div>
+
+        <script>
+          document.addEventListener('turbo:load', function() {
+            const progressBar = document.getElementById('conversion-progress-bar');
+            const percentText = document.getElementById('conversion-percentage');
+            const statusText = document.getElementById('conversion-status-text');
+            
+            if (!progressBar) return;
+
+            const movieId = "<%= @movie.id %>";
+            const episodeId = "<%= @current_episode&.id %>";
+            const pollUrl = episodeId ? `/movies/${movieId}/episodes/${episodeId}/conversion_status` : `/movies/${movieId}/conversion_status`;
+            
+            const pollInterval = setInterval(() => {
+              fetch(pollUrl)
+                .then(res => {
+                  if (!res.ok) {
+                    if (res.status === 404) {
+                      throw new Error("not_found");
+                    }
+                    throw new Error("network_error");
+                  }
+                  return res.json();
+                })
+                .then(data => {
+                  if (data.status === 'done') {
+                    clearInterval(pollInterval);
+                    statusText.textContent = "Complete!";
+                    progressBar.style.width = "100%";
+                    percentText.textContent = "100%";
+                    setTimeout(() => window.location.reload(), 1000);
+                  } else if (data.status === 'processing' || data.status === 'converting') {
+                    const percent = Math.round((data.progress || 0) * 100);
+                    progressBar.style.width = percent + '%';
+                    percentText.textContent = percent + '%';
+                    statusText.textContent = data.status === 'converting' ? 'Converting MP4' : 'Processing...';
+                  } else if (data.status === 'failed') {
+                    clearInterval(pollInterval);
+                    statusText.textContent = "Conversion Failed";
+                    statusText.style.color = "var(--danger)";
+                    progressBar.style.background = "var(--danger)";
+                  }
+                })
+                .catch(err => {
+                  if (err.message === "not_found") {
+                    clearInterval(pollInterval);
+                    statusText.textContent = "Movie Deleted";
+                    statusText.style.color = "var(--text-muted)";
+                    progressBar.style.background = "var(--text-muted)";
+                    percentText.textContent = "";
+                  } else {
+                    console.error("Error polling status:", err);
+                  }
+                });
+            }, 2000); // Poll every 2 seconds
+          });
+        </script>
+      </div>
+    <% end %>
+  <% elsif @movie.series? && @seasons.empty? %>
+    <div class="detail-player placeholder-player">
+      <p>No episodes available yet.</p>
+    </div>
+  <% end %>
+
+  <% if @movie.series? && @seasons.any? %>
+    <div class="episodes-section" style="margin-bottom: 2rem;">
+      <h3 style="margin-bottom: 1rem;">Episodes</h3>
+      <% @seasons.each do |season_number, episodes| %>
+        <div class="season-block" style="margin-bottom: 1.5rem;">
+          <h4 style="color: var(--text-secondary); margin-bottom: 0.5rem;">Season <%= season_number %></h4>
+          <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px;">
+            <% episodes.sort_by(&:episode_number).each do |episode| %>
+              <%= link_to movie_path(@movie, episode_id: episode.id), class: "btn #{episode == @current_episode ? 'btn-primary' : 'btn-secondary'}", style: "flex-shrink: 0;" do %>
+                Ep <%= episode.episode_number %>: <%= episode.title %>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+      
+      <% if logged_in? && (current_user.admin? || current_user.parent?) %>
+        <%= link_to new_movie_episode_path(@movie), class: "btn btn-ghost btn-small", style: "margin-top: 0.5rem;" do %>
+          <i data-lucide="plus" class="icon-inline"></i> Add Episode
+        <% end %>
+      <% end %>
+    </div>
+  <% elsif @movie.series? && logged_in? && (current_user.admin? || current_user.parent?) %>
+    <div style="margin-bottom: 2rem;">
+      <%= link_to new_movie_episode_path(@movie), class: "btn btn-primary" do %>
+        <i data-lucide="plus" class="icon-inline"></i> Add First Episode
+      <% end %>
+    </div>
+  <% end %>
+
+  <!-- Movie Info Bar -->
+  <div class="detail-info">
+    <div class="detail-left">
+      <h1 class="detail-title"><%= @movie.title %></h1>
+      <div class="detail-meta">
+        <span class="detail-badge"><%= @movie.genre %></span>
+        <% if @movie.year.present? %><span class="detail-year"><%= @movie.year %></span><% end %>
+        <% if @movie.director.present? %><span class="detail-director">Directed by <%= @movie.director %></span><% end %>
+        <% if @movie.reviews.any? %>
+          <span class="detail-rating">⭐ <%= (@movie.reviews.average(:rating).to_f).round(1) %>/5</span>
+        <% end %>
+      </div>
+
+      <% if @movie.description.present? %>
+        <p class="detail-desc"><%= @movie.description %></p>
+      <% end %>
+    </div>
+
+    <div class="detail-actions">
+      <% if logged_in? %>
+        <%= render "watchlist_entries/button", movie: @movie, watchlisted: WatchlistEntry.exists?(user: current_user, movie: @movie), style: "detail" %>
+      <% end %>
+      <% if logged_in? && (current_user.admin? || current_user.parent?) %>
+        <%= link_to edit_movie_path(@movie), class: "btn btn-secondary" do %>
+          <i data-lucide="pencil" class="icon-inline"></i> Edit
+        <% end %>
+        <%= button_to movie_path(@movie), method: :delete, class: "btn btn-danger", data: { turbo_confirm: "Delete this movie permanently?" } do %>
+          <i data-lucide="trash-2" class="icon-inline"></i> Delete
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+
+  <hr class="section-divider">
+
+  <!-- Ratings Section -->
+  <div class="detail-reviews">
+    <div class="section-header">
+      <h2>Ratings (<%= @reviews.count %>)</h2>
+    </div>
+
+    <div class="review-form-container" style="max-width: 300px;">
+      <%= form_with model: [@movie, @review], class: "review-form" do |f| %>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+          <div class="form-group" style="margin: 0; flex: 1;">
+            <% if logged_in? %>
+              <%= f.hidden_field :author, value: current_user.name %>
+            <% else %>
+              <%= f.hidden_field :author, value: "Anonymous" %>
+            <% end %>
+            
+            <div class="star-rating-input">
+              <% (1..5).to_a.reverse.each do |star| %>
+                <%= f.radio_button :rating, star, id: "rating_star_#{star}", required: true, class: "star-radio" %>
+                <label for="rating_star_<%= star %>" class="star-label" title="<%= star %> stars">★</label>
+              <% end %>
+            </div>
+          </div>
+          <%= button_tag type: "submit", class: "btn btn-primary" do %>
+            <i data-lucide="star" class="icon-inline"></i> Rate
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <% if @reviews.any? %>
+      <div class="reviews-list" style="display: flex; flex-wrap: wrap; gap: 1rem;">
+        <% @reviews.each do |review| %>
+          <div class="review-card" style="min-width: 150px; padding: 1rem;">
+            <div class="review-header" style="justify-content: center; margin: 0;">
+              <% if review.author.present? %>
+                <strong style="margin-right: 0.5rem;"><%= review.author %></strong>
+              <% end %>
+              <span class="review-stars"><% review.rating.to_i.times do %>★<% end %><% (5 - review.rating.to_i).times do %>☆<% end %></span>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-muted">No ratings yet. Be the first!</p>
+    <% end %>
+  </div>
+</div>
+
+<%= link_to movies_path, class: "back-link" do %>
+  <i data-lucide="arrow-left" class="icon-inline"></i> Back
+<% end %>
+
+<script>
+  document.addEventListener("turbo:load", function() {
+    const player = document.getElementById("movie-player");
+    if (!player) return;
+
+    // Prevent double binding
+    if (player.dataset.trackerInit) return;
+    player.dataset.trackerInit = "true";
+
+    // Initialize Plyr Custom Player
+    const plyrInstance = new Plyr(player, {
+      controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
+      settings: ['captions', 'quality', 'speed', 'loop'],
+      theme: '#e50914' // Netflix Red
+    });
+
+    const movieId = player.dataset.movieId;
+    const episodeId = player.dataset.episodeId;
+    const startTime = parseFloat(player.dataset.startTime || 0);
+
+    // Resume from saved time
+    if (startTime > 0) {
+      const seekToStart = () => {
+        if (plyrInstance.duration && startTime < plyrInstance.duration - 5) {
+          plyrInstance.currentTime = startTime;
+        } else if (!plyrInstance.duration) {
+          // Fallback if duration is not immediately ready
+          plyrInstance.currentTime = startTime;
+        }
+      };
+
+      plyrInstance.once('canplay', seekToStart);
+      plyrInstance.once('loadedmetadata', seekToStart);
+      // Try immediately as well
+      setTimeout(seekToStart, 500);
+    }
+
+    let lastSyncTime = 0;
+    
+    const syncProgress = () => {
+      const currentTime = plyrInstance.currentTime;
+      const duration = plyrInstance.duration;
+      
+      // Only sync if we've moved more than 5 seconds or it's paused/ended
+      if (Math.abs(currentTime - lastSyncTime) > 5 || plyrInstance.paused || plyrInstance.ended) {
+        lastSyncTime = currentTime;
+        
+        const formData = new FormData();
+        formData.append("movie_id", movieId);
+        if (episodeId) formData.append("episode_id", episodeId);
+        formData.append("current_time", currentTime);
+        formData.append("duration", duration || 0);
+
+        const csrfTokenNode = document.querySelector('meta[name="csrf-token"]');
+        if (csrfTokenNode) {
+          formData.append("authenticity_token", csrfTokenNode.content);
+        }
+
+        // Use fetch with keepalive for reliable delivery even when navigating away
+        fetch("<%= update_watch_progress_path %>", {
+          method: "POST",
+          body: formData,
+          keepalive: true,
+          headers: {
+            "Accept": "application/json"
+          }
+        }).catch(err => console.error("Progress sync failed", err));
+      }
+    };
+
+    // Sync periodically
+    plyrInstance.on("timeupdate", () => {
+      if (Math.abs(plyrInstance.currentTime - lastSyncTime) > 10) {
+        syncProgress();
+      }
+    });
+
+    // Final syncs
+    plyrInstance.on("pause", syncProgress);
+    plyrInstance.on("ended", syncProgress);
+    window.addEventListener("beforeunload", syncProgress);
+  });
+</script>

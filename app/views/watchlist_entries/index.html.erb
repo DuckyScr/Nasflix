@@ -1,0 +1,47 @@
+<div class="page-wrapper">
+  <div class="page-header" style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2.2rem;">My Watchlist</h1>
+    <%= link_to "Add Entry", new_watchlist_entry_path, class: "btn btn-primary" %>
+  </div>
+
+  <% if @watchlist_entries.any? %>
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Movie</th>
+            <th>Status</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Notes</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @watchlist_entries.each do |entry| %>
+            <tr>
+              <td>
+                <%= link_to entry.movie.title, movie_path(entry.movie), class: "table-link" %>
+              </td>
+              <td>
+                <span class="status-badge status-<%= entry.status %>"><%= entry.status.capitalize %></span>
+              </td>
+              <td><%= entry.start_date&.strftime("%b %d, %Y") || "—" %></td>
+              <td><%= entry.end_date&.strftime("%b %d, %Y") || "—" %></td>
+              <td><%= truncate(entry.notes, length: 60) || "—" %></td>
+              <td class="table-actions">
+                <%= link_to "Edit", edit_watchlist_entry_path(entry), class: "btn btn-small btn-secondary" %>
+                <%= button_to "Delete", watchlist_entry_path(entry), method: :delete, class: "btn btn-small btn-danger", data: { turbo_confirm: "Remove from watchlist?" } %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <p>Your watchlist is empty. Add some movies to track!</p>
+      <%= link_to "Add Entry", new_watchlist_entry_path, class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</div>

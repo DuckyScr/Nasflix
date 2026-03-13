@@ -1,0 +1,29 @@
+<%= form_with model: movie_night, class: "form-container" do |f| %>
+  <% if movie_night.errors.any? %>
+    <div class="form-errors">
+      <h3><%= pluralize(movie_night.errors.count, "error") %> prevented saving:</h3>
+      <ul>
+        <% movie_night.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :movie_id, "Select Movie" %>
+    <%= f.select :movie_id, options_from_collection_for_select(@movies, :id, :title), { include_blank: "Choose a movie" }, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :scheduled_at, "Date & Time" %>
+    <%= f.datetime_local_field :scheduled_at, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :notes, "Notes for guests (optional)" %>
+    <%= f.text_area :notes, class: "form-control", rows: 4, placeholder: "e.g., Bring popcorn! We start right at 8." %>
+  </div>
+
+  <%= f.submit "Create Event", class: "btn btn-primary" %>
+<% end %>

@@ -1,0 +1,69 @@
+<div class="page-wrapper">
+  <div class="page-header" style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2.2rem;">Movie Nights</h1>
+    <% if @movie_nights.any? %>
+      <%= link_to new_movie_night_path, class: "btn btn-primary" do %>
+        <i data-lucide="calendar-plus" class="icon-inline"></i> Host a Movie Night
+      <% end %>
+    <% end %>
+  </div>
+
+  <% if @movie_nights.any? %>
+    <div class="movie-row" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+      <% @movie_nights.each do |night| %>
+        <% movie = night.movie %>
+        <div class="poster-card" style="aspect-ratio: 16/9; margin-bottom: 1rem;">
+          <% if movie.thumbnail.attached? %>
+            <div class="poster-thumb">
+              <%= image_tag movie.thumbnail, style: "width: 100%; height: 100%; object-fit: cover; opacity: 0.6;" %>
+            </div>
+          <% elsif movie.video.attached? && movie.video.content_type.in?(%w[video/mp4 video/quicktime]) %>
+            <div class="poster-thumb">
+              <video preload="metadata" muted style="opacity: 0.6;">
+                <source src="<%= url_for(movie.video) %>#t=5" type="<%= movie.video.content_type %>">
+              </video>
+            </div>
+          <% else %>
+            <div class="poster-thumb poster-placeholder">
+              <i data-lucide="film" style="width: 2rem; height: 2rem; color: var(--text-muted);"></i>
+            </div>
+          <% end %>
+          
+          <div class="poster-overlay" style="opacity: 1; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.1) 100%);">
+            <div class="poster-overlay-top">
+              <span class="poster-genre" style="background: var(--accent); color: #fff;">
+                <i data-lucide="calendar" style="width: 10px; height: 10px; margin-right: 4px;"></i><%= night.scheduled_at.strftime("%b %d") %>
+              </span>
+            </div>
+            <div class="poster-overlay-bottom" style="transform: none;">
+              <h3 class="poster-title" style="font-size: 1.2rem; margin-bottom: 2px;"><%= movie.title %></h3>
+              <div class="poster-meta" style="margin-bottom: 6px; font-size: 0.8rem;">
+                <span><i data-lucide="clock" class="icon-inline" style="width: 12px; height: 12px;"></i> <%= night.scheduled_at.strftime("%l:%M %p") %></span>
+                <span>• Host: <%= night.host.name %></span>
+              </div>
+              
+              <% user_invitation = night.invitations.find { |i| i.user_id == current_user.id } %>
+              <% if user_invitation %>
+                <div style="font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; display: inline-block; background: rgba(255,255,255,0.1);" class="status-<%= user_invitation.status %>">
+                  Status: <strong><%= user_invitation.status.capitalize %></strong>
+                </div>
+              <% elsif night.host == current_user %>
+                <div style="font-size: 0.75rem; color: var(--info); padding: 2px 6px; border-radius: 4px; display: inline-block; background: rgba(78,168,222,0.1);">
+                  <i data-lucide="users" class="icon-inline" style="width: 10px; height: 10px;"></i> <%= night.invitations.count %> invited
+                </div>
+              <% end %>
+            </div>
+          </div>
+          <%= link_to "", movie_night_path(night), class: "poster-link" %>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <p>No movie nights scheduled yet.</p>
+      <%= link_to new_movie_night_path, class: "btn btn-primary" do %>
+        <i data-lucide="calendar-plus" class="icon-inline"></i> Host a Movie Night
+      <% end %>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,194 @@
+<script>
+  document.addEventListener("turbo:load", function() {
+    setupUploadForms();
+  });
+
+  function setupUploadForms() {
+    const forms = document.querySelectorAll(".upload-form");
+    
+    forms.forEach(form => {
+      // Prevent double init
+      if (form.dataset.uploadInit) return;
+      form.dataset.uploadInit = "true";
+
+      const fileInput = form.querySelector(".file-upload-input");
+      const wrapper = form.querySelector(".file-upload-wrapper");
+      const nameTxt = form.querySelector(".file-upload-name");
+      const iconTxt = form.querySelector(".file-upload-icon");
+      
+      const progressContainer = form.querySelector(".upload-progress-container");
+      const progressBar = form.querySelector(".upload-progress-bar");
+      const progressPct = form.querySelector(".upload-progress-percentage");
+      const progressText = form.querySelector(".upload-progress-text");
+      const submitBtn = form.querySelector(".submit-btn");
+
+      // File selection UI update
+      if (fileInput && wrapper) {
+        fileInput.addEventListener("change", function(e) {
+          if (this.files && this.files.length > 0) {
+            const fileName = this.files[0].name;
+            const fileSize = (this.files[0].size / (1024 * 1024)).toFixed(2); // MB
+            nameTxt.textContent = `${fileName} (${fileSize} MB)`;
+            nameTxt.style.color = "var(--success)";
+            iconTxt.textContent = "✅";
+            wrapper.style.borderColor = "var(--success)";
+            wrapper.style.backgroundColor = "rgba(70, 211, 105, 0.05)";
+          } else {
+            nameTxt.textContent = "No file selected";
+            nameTxt.style.color = "";
+            iconTxt.textContent = "📁";
+            wrapper.style.borderColor = "";
+            wrapper.style.backgroundColor = "";
+          }
+        });
+
+        // Drag and drop visuals
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+          wrapper.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+          wrapper.addEventListener(eventName, () => wrapper.classList.add('highlight'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+          wrapper.addEventListener(eventName, () => wrapper.classList.remove('highlight'), false);
+        });
+      }
+
+      // XHR AJAX Form Submission for Progress Tracking
+      form.addEventListener("submit", function(e) {
+        // Only use custom XHR if a file is actually selected (otherwise standard submit is fine and faster)
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+          return; 
+        }
+
+        e.preventDefault();
+        
+        // UI Transition
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = "⏳ Uploading... Please wait";
+        progressContainer.style.display = "block";
+        wrapper.style.opacity = "0.5";
+        wrapper.style.pointerEvents = "none";
+        
+        // Prepare XHR
+        const xhr = new XMLHttpRequest();
+        const formData = new FormData(form);
+        const url = form.action;
+        const method = form.querySelector('input[name="_method"]')?.value || form.method || 'POST';
+
+        xhr.open(method.toUpperCase(), url, true);
+        xhr.setRequestHeader("Accept", "application/json");
+
+        // Progress event listener for the FILE UPLOAD transfer
+        xhr.upload.addEventListener("progress", function(e) {
+          if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            progressBar.style.width = percentComplete + "%";
+            progressPct.textContent = percentComplete + "%";
+            
+            if (percentComplete === 100) {
+              progressText.textContent = "Processing video format... (this may take a few minutes)";
+              submitBtn.innerHTML = "⚙️ Converting...";
+              progressBar.style.transition = "width 0.5s ease-out";
+              progressBar.style.width = "0%";
+              progressPct.textContent = "Waiting to start...";
+              // Transition bar color to indicate processing phase
+              progressBar.style.background = "linear-gradient(90deg, #bb86fc 0%, #3700b3 100%)";
+              progressBar.style.boxShadow = "0 0 10px rgba(187, 134, 252, 0.5)";
+            }
+          }
+        });
+
+        // Success / Error handler
+        xhr.onload = function() {
+          if (xhr.status >= 200 && xhr.status < 400) {
+            let response;
+            try {
+              response = JSON.parse(xhr.responseText);
+            } catch (err) {
+              console.error("Failed to parse JSON response");
+              alert("An unexpected error occurred.");
+              window.location.reload();
+              return;
+            }
+
+            if (response.processing && response.poll_url) {
+              // Video needs conversion, start polling
+              progressText.textContent = "Converting video to universally compatible MP4...";
+              
+              const pollInterval = setInterval(() => {
+                fetch(response.poll_url, { headers: { "Accept": "application/json" } })
+                  .then(res => res.json())
+                  .then(pollData => {
+                    if (pollData.status === "done") {
+                      clearInterval(pollInterval);
+                      progressPct.textContent = "100%";
+                      progressBar.style.width = "100%";
+                      progressText.textContent = "Conversion complete! Redirecting...";
+                      progressText.style.color = "var(--success)";
+                      setTimeout(() => { Turbo.visit(response.redirect_url); }, 500);
+                    } else if (pollData.status === "processing") {
+                      let progressVal = Math.round((pollData.progress || 0) * 100);
+                      progressPct.textContent = progressVal + "%";
+                      progressBar.style.width = progressVal + "%";
+                    } else {
+                      // Unexpected status or error
+                      clearInterval(pollInterval);
+                      progressText.textContent = "Conversion failed. Please try again.";
+                      progressText.style.color = "var(--danger)";
+                      progressBar.style.background = "var(--danger)";
+                      submitBtn.disabled = false;
+                      submitBtn.innerHTML = "Try Again";
+                      wrapper.style.opacity = "1";
+                      wrapper.style.pointerEvents = "auto";
+                    }
+                  })
+                  .catch(err => console.error("Polling error:", err));
+              }, 1500); // Poll every 1.5 seconds
+              
+            } else if (response.redirect_url) {
+              // Standard MP4 upload, no processing needed
+              progressText.textContent = "Upload complete!";
+              progressText.style.color = "var(--success)";
+              Turbo.visit(response.redirect_url);
+            }
+
+          } else {
+            // Error handling (validation errors rendered as JSON array)
+            progressText.textContent = "Upload failed. Please check your file.";
+            progressText.style.color = "var(--danger)";
+            progressBar.style.background = "var(--danger)";
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = "Try Again";
+            wrapper.style.opacity = "1";
+            wrapper.style.pointerEvents = "auto";
+            
+            try {
+              const errorResponse = JSON.parse(xhr.responseText);
+              if (errorResponse.errors) {
+                alert("Errors: \n" + errorResponse.errors.join("\n"));
+              }
+            } catch (e) {
+              alert("An error occurred during upload. Please check file size and format.");
+            }
+          }
+        };
+
+        xhr.onerror = function() {
+          alert("Network error occurred during upload.");
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = "Try Again";
+        };
+
+        xhr.send(formData);
+      });
+    });
+  }
+</script>

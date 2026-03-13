@@ -1,0 +1,31 @@
+<%
+  # Locals: movie, watchlisted, style (hero | card | detail)
+  
+  if style == "hero"
+    btn_class = "btn btn-ghost btn-lg"
+    active_text = "In Watchlist"
+    inactive_text = "My List"
+  elsif style == "card"
+    btn_class = watchlisted ? "poster-btn poster-btn-list active" : "poster-btn poster-btn-list"
+    active_text = ""
+    inactive_text = ""
+  else # detail
+    btn_class = "btn btn-ghost"
+    active_text = "In My List"
+    inactive_text = "Add to List"
+  end
+
+  id_prefix = "watchlist_#{style}_btn_#{movie.id}"
+%>
+
+<% if watchlisted %>
+  <%= button_to quick_remove_watchlist_path(movie_id: movie.id), method: :delete, form: { id: id_prefix }, class: btn_class, title: "Remove from list" do %>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" style="width: 1.2rem; height: 1.2rem; margin-right: <%= style == 'card' ? '0' : '0.5rem' %>; vertical-align: text-bottom;"><path d="M20 6 9 17l-5-5"/></svg>
+    <%= active_text %>
+  <% end %>
+<% else %>
+  <%= button_to quick_add_watchlist_path(movie_id: movie.id), form: { id: id_prefix }, class: btn_class, title: "Add to list" do %>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus" style="width: 1.2rem; height: 1.2rem; margin-right: <%= style == 'card' ? '0' : '0.5rem' %>; vertical-align: text-bottom;"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+    <%= inactive_text %>
+  <% end %>
+<% end %>

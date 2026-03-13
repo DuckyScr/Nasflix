@@ -1,0 +1,36 @@
+<div class="page-wrapper">
+  <div class="page-header" style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2.2rem;">Admin Settings</h1>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+    <% @stats.each do |label, count| %>
+      <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem; text-align: center;">
+        <div style="font-size: 2rem; font-weight: 700; color: var(--accent);"><%= count %></div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0.3rem;"><%= label.to_s.humanize %></div>
+      </div>
+    <% end %>
+  </div>
+
+  <hr class="section-divider">
+
+  <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+    <!-- Load Demo Data -->
+    <div style="flex: 1; min-width: 300px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem;">
+      <h3>📦 Load Demo Data</h3>
+      <p style="color: var(--text-secondary); margin: 0.75rem 0 1rem; font-size: 0.9rem;">
+        Populate the database with sample movies, reviews, watchlist entries, users, and movie nights. Great for testing and demonstrations.
+      </p>
+      <%= button_to "Load Demo Data", admin_load_demo_path, method: :post, class: "btn btn-primary", data: { turbo_confirm: "This will add demo data to the database. Continue?" } %>
+    </div>
+
+    <!-- Reset App -->
+    <div style="flex: 1; min-width: 300px; background: rgba(229, 9, 20, 0.05); border: 1px solid rgba(229, 9, 20, 0.2); border-radius: var(--radius-lg); padding: 1.5rem;">
+      <h3>⚠️ Reset Application</h3>
+      <p style="color: var(--text-secondary); margin: 0.75rem 0 1rem; font-size: 0.9rem;">
+        <strong style="color: var(--danger);">Danger zone.</strong> This will permanently delete ALL data — users, movies, reviews, watchlist, movie nights, invitations, and uploaded videos. The app will restart the onboarding wizard.
+      </p>
+      <%= button_to "Reset Everything", admin_reset_path, method: :delete, class: "btn btn-danger", data: { turbo_confirm: "⚠️ This will PERMANENTLY DELETE all data and reset the app. Are you absolutely sure?" } %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,148 @@
+<% movie = @movie_night.movie %>
+
+<div class="hero-banner" style="height: 50vh; min-height: 400px; margin-bottom: 2rem;">
+  <div class="hero-video-bg">
+    <% if movie.thumbnail.attached? %>
+      <%= image_tag movie.thumbnail, style: "width: 100%; height: 100%; object-fit: cover; opacity: 0.4;" %>
+    <% elsif movie.video.attached? && movie.video.content_type.in?(%w[video/mp4 video/quicktime]) %>
+      <video preload="metadata" muted style="opacity: 0.4;">
+        <source src="<%= url_for(movie.video) %>#t=5" type="<%= movie.video.content_type %>">
+      </video>
+    <% else %>
+      <div style="width: 100%; height: 100%; background: var(--bg-secondary);"></div>
+    <% end %>
+    <div class="hero-gradient"></div>
+  </div>
+  
+  <div class="hero-content" style="padding-bottom: 2rem; max-width: 800px;">
+    <span class="hero-badge" style="background: rgba(255,255,255,0.15); backdrop-filter: blur(4px); letter-spacing: 0.5px; margin-bottom: 12px; display: inline-flex; align-items: center; gap: 6px;">
+      <i data-lucide="calendar" class="icon-inline"></i> <%= @movie_night.scheduled_at.strftime("%A, %B %d, %Y at %l:%M %p") %>
+    </span>
+    <h1 class="hero-title" style="font-size: 3rem; margin-bottom: 4px;">Watch Party</h1>
+    <h2 style="font-size: 1.5rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+      <i data-lucide="film" class="icon-inline"></i> <%= link_to movie.title, movie_path(movie), style: "color: inherit; text-decoration: underline; text-decoration-color: rgba(255,255,255,0.3);" %>
+    </h2>
+    <div class="hero-actions" style="margin-bottom: 1rem;">
+      <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.95rem; background: rgba(0,0,0,0.6); padding: 6px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+        <i data-lucide="user" class="icon-inline" style="color: var(--text-muted); width: 14px; height: 14px;"></i>
+        <span>Hosted by <strong><%= @movie_night.host.name %></strong></span>
+      </div>
+      
+      <% if @movie_night.host == current_user || current_user.admin? %>
+        <%= button_to movie_night_path(@movie_night), method: :delete, class: "btn btn-danger btn-small", style: "margin-left: auto; height: 34px;", data: { turbo_confirm: "Are you sure you want to cancel this event?" } do %>
+          <i data-lucide="trash-2" class="icon-inline"></i> Cancel Event
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="content-section" style="max-width: 1000px; margin: 0 auto;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <%= link_to movie_nights_path, class: "back-link" do %>
+      <i data-lucide="arrow-left" class="icon-inline"></i> Back to Movie Nights
+    <% end %>
+  </div>
+
+  <% if @movie_night.notes.present? %>
+    <div class="form-container" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); margin: 0 auto 2rem; padding: 1.5rem;">
+      <h3 style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem;">
+        <i data-lucide="message-square" class="icon-inline" style="color: var(--text-muted);"></i> Host Notes
+      </h3>
+      <p style="color: var(--text-primary); line-height: 1.6;"><%= @movie_night.notes %></p>
+    </div>
+  <% end %>
+
+  <% user_invite = @movie_night.invitations.find_by(user: current_user) %>
+  <% if user_invite %>
+    <div class="form-container" style="background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--radius-lg); margin: 0 auto 2rem; padding: 2rem; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+      <div style="width: 64px; height: 64px; background: rgba(78, 168, 222, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; border: 1px solid rgba(78, 168, 222, 0.3);">
+        <i data-lucide="mail-open" style="width: 32px; height: 32px; color: var(--info);"></i>
+      </div>
+      <h3 style="font-size: 1.8rem; margin-bottom: 0.5rem;">You're Invited!</h3>
+      <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 1.1rem;">
+        You have been invited to join this Watch Party.
+      </p>
+      
+      <div style="background: rgba(0,0,0,0.3); padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; margin-bottom: 2rem; border: 1px solid rgba(255,255,255,0.05);">
+        Current RSVP Status: <strong class="<%= user_invite.accepted? ? 'text-success' : (user_invite.declined? ? 'text-danger' : 'text-primary') %>" style="margin-left: 4px; letter-spacing: 0.5px; text-transform: uppercase;"><%= user_invite.status %></strong>
+      </div>
+      
+      <div style="display: flex; gap: 1rem; width: 100%; max-width: 400px; justify-content: center;">
+        <%= form_with model: user_invite, style: "flex: 1; max-width: 180px;" do |f| %>
+          <%= f.hidden_field :status, value: "accepted" %>
+          <%= button_tag type: "submit", class: "btn btn-primary", disabled: user_invite.accepted?, style: "width: 100%; height: 48px; font-size: 1rem; border-radius: 8px; font-weight: 600; display: flex; justify-content: center; align-items: center; gap: 8px; #{user_invite.accepted? ? 'opacity: 1; outline: 2px solid var(--success); outline-offset: 2px;' : ''}" do %>
+            <i data-lucide="check" class="icon-inline"></i> Accept Invite
+          <% end %>
+        <% end %>
+        
+        <%= form_with model: user_invite, style: "flex: 1; max-width: 180px;" do |f| %>
+          <%= f.hidden_field :status, value: "declined" %>
+          <%= button_tag type: "submit", class: "btn btn-secondary", disabled: user_invite.declined?, style: "width: 100%; height: 48px; font-size: 1rem; border-radius: 8px; font-weight: 600; display: flex; justify-content: center; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); #{user_invite.declined? ? 'opacity: 1; outline: 2px solid var(--danger); outline-offset: 2px;' : ''}" do %>
+            <i data-lucide="x" class="icon-inline"></i> Decline
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <hr class="section-divider">
+
+  <div class="invite-section" style="display: flex; gap: 2rem; flex-wrap: wrap; justify-content: center; margin: 0 auto; max-width: 900px;">
+    <div style="flex: 1; min-width: 300px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem;">
+      <h2 style="font-size: 1.3rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+        <i data-lucide="users" class="icon-inline" style="color: var(--text-muted);"></i> Guest List
+      </h2>
+      <% if @invitations.any? %>
+        <ul style="list-style: none; padding: 0;">
+          <% @invitations.each do |invite| %>
+            <li style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); margin-bottom: 4px; border-radius: 4px;">
+              <div style="display: flex; align-items: center; gap: 0.8rem;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--border); display: flex; align-items: center; justify-content: center;">
+                  <i data-lucide="user" style="width: 16px; height: 16px; color: var(--text-secondary);"></i>
+                </div>
+                <span style="font-weight: 500;"><%= invite.user.name %></span>
+              </div>
+              <% status_color = invite.accepted? ? 'var(--success)' : (invite.declined? ? 'var(--danger)' : 'var(--text-muted)') %>
+              <span style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 3px 8px; border-radius: 12px; border: 1px solid <%= status_color %>; color: <%= status_color %>; background: rgba(255,255,255,0.05);">
+                <%= invite.status %>
+              </span>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <div style="padding: 2rem; text-align: center; border: 1px dashed var(--border); border-radius: var(--radius);">
+          <i data-lucide="user-x" style="width: 2rem; height: 2rem; color: var(--text-muted); margin-bottom: 0.5rem;"></i>
+          <p class="text-muted">No one has been invited yet.</p>
+        </div>
+      <% end %>
+    </div>
+
+    <% if @movie_night.host == current_user %>
+      <div style="flex: 1; min-width: 300px; background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border); align-self: flex-start;">
+        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+          <i data-lucide="user-plus" class="icon-inline" style="color: var(--text-muted);"></i> Invite Someone
+        </h3>
+        <% if @available_users.any? %>
+          <%= form_with model: [@movie_night, Invitation.new] do |f| %>
+            <div class="form-group">
+              <%= f.label :user_id, "Select User", style: "display: none;" %>
+              <div style="position: relative;">
+                <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-muted); pointer-events: none;"></i>
+                <%= f.select :user_id, options_from_collection_for_select(@available_users, :id, :name), { include_blank: "Choose someone to invite" }, class: "form-control", style: "padding-left: 2.2rem; height: 44px; font-size: 1rem;" %>
+              </div>
+            </div>
+            <%= button_tag type: "submit", class: "btn btn-primary", style: "width: 100%; height: 44px; font-size: 1rem;" do %>
+              <i data-lucide="send" class="icon-inline"></i> Send Invite
+            <% end %>
+          <% end %>
+        <% else %>
+          <div style="padding: 1.5rem; text-align: center; background: rgba(70, 211, 105, 0.1); border-radius: var(--radius); border: 1px solid rgba(70, 211, 105, 0.3);">
+            <i data-lucide="check-circle" style="width: 2rem; height: 2rem; color: var(--success); margin-bottom: 0.5rem;"></i>
+            <p style="color: var(--success); font-weight: 500;">Everyone is invited!</p>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

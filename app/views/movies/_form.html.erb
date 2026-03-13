@@ -1,0 +1,103 @@
+<%= form_with model: movie, class: "form-container upload-form", html: { multipart: true } do |f| %>
+  <% if movie.errors.any? %>
+    <div class="form-errors">
+      <h3><%= pluralize(movie.errors.count, "error") %> prevented this movie from being saved:</h3>
+      <ul>
+        <% movie.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :title %>
+    <%= f.text_field :title, class: "form-control", placeholder: "Enter title", required: true %>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <%= f.label :content_type, "Type" %>
+      <%= f.select :content_type, options_for_select([["Movie", "movie"], ["TV Series", "series"]], movie.content_type || "movie"), {}, class: "form-control", id: "content-type-select" %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :genre %>
+      <%= f.select :genre, options_for_select(
+        ["Action", "Comedy", "Drama", "Horror", "Sci-Fi", "Thriller", "Romance", "Animation", "Documentary", "Fantasy"],
+        movie.genre
+      ), { include_blank: "Select a genre" }, class: "form-control", required: true %>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <%= f.label :year %>
+      <%= f.number_field :year, class: "form-control", min: 1900, max: Date.today.year, placeholder: "e.g. 2024" %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :director %>
+      <%= f.text_field :director, class: "form-control", placeholder: "Enter director name" %>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :description %>
+    <%= f.text_area :description, class: "form-control", rows: 4, placeholder: "Enter description..." %>
+  </div>
+
+  <div class="form-group" style="margin-bottom: 1.5rem;">
+    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+      <%= f.check_box :kid_friendly, style: "width: auto; margin: 0;" %>
+      <strong>Kid Friendly (Visible to child accounts)</strong>
+    </label>
+    <p class="text-muted" style="margin-top: 5px; font-size: 0.85rem;">If unchecked, this title will only be visible to Admins and Parents.</p>
+  </div>
+
+  <div class="form-group" id="video-upload-group">
+    <%= f.label :video, "Upload Movie Video (leave blank for series)" %>
+    <div class="file-upload-wrapper">
+      <div class="file-upload-icon">📁</div>
+      <div class="file-upload-text">Drag & drop your video here or click to browse</div>
+      <%= f.file_field :video, class: "file-upload-input", accept: "video/mp4,video/x-msvideo,video/webm,video/x-matroska,video/mkv,video/quicktime,.mp4,.avi,.webm,.mkv,.mov" %>
+      <div class="file-upload-name">No file selected</div>
+    </div>
+  </div>
+
+  <!-- Progress Bar UI -->
+  <div class="upload-progress-container" style="display: none;">
+    <div class="upload-progress-info">
+      <span class="upload-progress-text">Uploading...</span>
+      <span class="upload-progress-percentage">0%</span>
+    </div>
+    <div class="upload-progress-track">
+      <div class="upload-progress-bar"></div>
+    </div>
+  </div>
+
+  <%= f.submit class: "btn btn-primary submit-btn", style: "width: 100%; margin-top: 1rem;" %>
+<% end %>
+
+<%= render "shared/upload_script" %>
+
+<script>
+  // Toggle video upload field based on content type
+  document.addEventListener("turbo:load", function() {
+    const typeSelect = document.getElementById("content-type-select");
+    const videoGroup = document.getElementById("video-upload-group");
+    
+    if (typeSelect && videoGroup) {
+      const toggleVideo = () => {
+        if (typeSelect.value === "series") {
+          videoGroup.style.display = "none";
+        } else {
+          videoGroup.style.display = "block";
+        }
+      };
+      
+      typeSelect.addEventListener("change", toggleVideo);
+      toggleVideo(); // initial run
+    }
+  });
+</script>

@@ -1,0 +1,108 @@
+<% has_hero = @movies.any? && @movies.first.video.attached? && @movies.first.video.content_type.in?(%w[video/mp4 video/quicktime]) %>
+<% if has_hero %>
+  <% hero = @movies.first %>
+  <div class="hero-banner">
+    <div class="hero-video-bg">
+      <video id="hero-video" autoplay="autoplay" muted="muted" loop="loop" playsinline="playsinline" preload="metadata" <%= "poster='#{url_for(hero.thumbnail)}'" if hero.thumbnail.attached? %>>
+        <source src="<%= url_for(hero.video) %>" type="<%= hero.video.content_type %>">
+      </video>
+      <div class="hero-gradient"></div>
+    </div>
+    <div class="hero-content">
+      <span class="hero-badge"><%= hero.genre %></span>
+      <h1 class="hero-title"><%= hero.title %></h1>
+      <p class="hero-desc"><%= truncate(hero.description, length: 200) %></p>
+      <div class="hero-actions">
+        <% hero_progress = @watch_progresses_by_movie_id[hero.id] if defined?(@watch_progresses_by_movie_id) %>
+        <% if hero_progress.present? %>
+          <% resume_path = hero.series? && hero_progress.episode_id ? movie_path(hero, episode_id: hero_progress.episode_id) : movie_path(hero) %>
+          <%= link_to resume_path, class: "btn btn-primary btn-lg" do %>
+            <i data-lucide="play-circle" class="icon-inline"></i> Continue
+          <% end %>
+        <% else %>
+          <%= link_to movie_path(hero), class: "btn btn-primary btn-lg" do %>
+            <i data-lucide="play" class="icon-inline"></i> Play
+          <% end %>
+        <% end %>
+        
+        <%= render "watchlist_entries/button", movie: hero, watchlisted: @watchlisted_movie_ids.include?(hero.id), style: "hero" %>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Safari turbo navigation autoplay workaround
+    setTimeout(function() {
+      var heroVideo = document.getElementById("hero-video");
+      if (heroVideo) {
+        heroVideo.muted = true;
+        heroVideo.play().catch(function(e){ console.log("Safari auto-play prevented:", e); });
+      }
+    }, 100);
+  </script>
+<% end %>
+
+<div class="content-section" <%= "style='margin-top: 6rem;'" unless has_hero %>>
+  <div class="section-header">
+    <h2>All Movies</h2>
+    <% if @movies.any? && logged_in? && (current_user.admin? || current_user.parent?) %>
+      <%= link_to new_movie_path, class: "btn btn-secondary btn-small" do %>
+        <i data-lucide="plus" class="icon-inline"></i> Add Movie
+      <% end %>
+    <% end %>
+  </div>
+
+  <% if @movies.any? %>
+    <div class="movie-row">
+      <% @movies.each do |movie| %>
+        <div class="poster-card">
+          <% if movie.thumbnail.attached? %>
+            <div class="poster-thumb">
+              <%= image_tag movie.thumbnail, style: "width: 100%; height: 100%; object-fit: cover;" %>
+            </div>
+          <% elsif movie.video.attached? && movie.video.content_type.in?(%w[video/mp4 video/quicktime]) %>
+            <div class="poster-thumb">
+              <video preload="metadata" muted>
+                <source src="<%= url_for(movie.video) %>#t=5" type="<%= movie.video.content_type %>">
+              </video>
+            </div>
+          <% else %>
+            <div class="poster-thumb poster-placeholder" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+              <% if movie.video.attached? %>
+                <i data-lucide="loader-2" style="width: 2rem; height: 2rem; animation: spin 2s linear infinite; margin-bottom: 0.5rem;"></i>
+                <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Processing</span>
+              <% else %>
+                <i data-lucide="film" style="width: 2rem; height: 2rem; color: var(--text-muted);"></i>
+              <% end %>
+            </div>
+          <% end %>
+
+          <div class="poster-overlay">
+            <div class="poster-overlay-top">
+              <span class="poster-genre"><%= movie.genre %></span>
+              <% if movie.reviews.any? %>
+                <span class="poster-rating">⭐ <%= (movie.reviews.average(:rating).to_f).round(1) %></span>
+              <% end %>
+            </div>
+            <div class="poster-overlay-bottom">
+              <h3 class="poster-title"><%= movie.title %></h3>
+              <div class="poster-meta">
+                <% if movie.year.present? %><span><%= movie.year %></span><% end %>
+                <% if movie.director.present? %><span><%= movie.director %></span><% end %>
+              </div>
+              <div class="poster-actions">
+                <%= render "watchlist_entries/button", movie: movie, watchlisted: @watchlisted_movie_ids.include?(movie.id), style: "card" %>
+              </div>
+            </div>
+          </div>
+
+          <%= link_to "", movie_path(movie), class: "poster-link" %>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <p>No movies yet. Upload your first movie!</p>
+      <%= link_to "+ Add Movie", new_movie_path, class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</div>

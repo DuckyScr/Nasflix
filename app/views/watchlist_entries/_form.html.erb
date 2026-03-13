@@ -1,0 +1,45 @@
+<%= form_with model: watchlist_entry, class: "form-container" do |f| %>
+  <% if watchlist_entry.errors.any? %>
+    <div class="form-errors">
+      <h3><%= pluralize(watchlist_entry.errors.count, "error") %> prevented this entry from being saved:</h3>
+      <ul>
+        <% watchlist_entry.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :movie_id, "Movie" %>
+    <%= f.select :movie_id, options_from_collection_for_select(@movies, :id, :title, watchlist_entry.movie_id),
+        { include_blank: "Select a movie" }, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :status %>
+    <%= f.select :status, options_for_select(
+      [["Planning", "planning"], ["Watching", "watching"], ["Completed", "completed"], ["Dropped", "dropped"]],
+      watchlist_entry.status
+    ), { include_blank: "Select status" }, class: "form-control" %>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <%= f.label :start_date, "Start Date" %>
+      <%= f.date_field :start_date, class: "form-control" %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :end_date, "End Date" %>
+      <%= f.date_field :end_date, class: "form-control" %>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :notes %>
+    <%= f.text_area :notes, class: "form-control", rows: 4, placeholder: "Any notes about this movie..." %>
+  </div>
+
+  <%= f.submit class: "btn btn-primary" %>
+<% end %>

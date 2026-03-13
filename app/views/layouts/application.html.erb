@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Nasflix — Movie Tracker</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="Nasflix - Track your favorite movies, write reviews, and manage your watchlist.">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+
+    <!-- Plyr Video Player for better MKV / format support -->
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    
+    <!-- Modern SVG Icons via Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+      document.addEventListener("turbo:load", () => {
+        lucide.createIcons();
+      });
+      document.addEventListener("turbo:render", () => {
+        lucide.createIcons();
+      });
+    </script>
+    
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body>
+    <nav class="navbar">
+      <div class="navbar-container">
+        <div class="navbar-brand">
+          <%= link_to root_path, class: "brand-link", style: "display: flex; align-items: center; gap: 0.5rem;" do %>
+            <i data-lucide="clapperboard" style="color: var(--primary);"></i> NASFLIX
+          <% end %>
+        </div>
+        <div class="navbar-links">
+          <%= link_to movies_path, class: "nav-link #{controller_name == 'movies' ? 'active' : ''}" do %>
+            <i data-lucide="film" style="width: 1rem; height: 1rem; margin-right: 0.25rem; vertical-align: text-bottom;"></i> Movies
+          <% end %>
+          <%= link_to watchlist_entries_path, class: "nav-link #{controller_name == 'watchlist_entries' ? 'active' : ''}" do %>
+            <i data-lucide="list-video" style="width: 1rem; height: 1rem; margin-right: 0.25rem; vertical-align: text-bottom;"></i> My List
+          <% end %>
+          <%= link_to movie_nights_path, class: "nav-link #{controller_name == 'movie_nights' ? 'active' : ''}" do %>
+            <i data-lucide="users" style="width: 1rem; height: 1rem; margin-right: 0.25rem; vertical-align: text-bottom;"></i> Watch Party
+          <% end %>
+
+          <div class="nav-divider" style="width: 1px; height: 24px; background: var(--border); margin: 0 10px;"></div>
+
+          <% if logged_in? %>
+            <% if current_user.admin? %>
+              <%= link_to users_path, class: "nav-link #{controller_name == 'users' ? 'active' : ''}" do %>
+                <i data-lucide="user-cog" style="width: 1rem; height: 1rem; vertical-align: text-bottom;"></i> Users
+              <% end %>
+              <%= link_to admin_path, class: "nav-link #{controller_name == 'admin' ? 'active' : ''}" do %>
+                <i data-lucide="shield" style="width: 1rem; height: 1rem; vertical-align: text-bottom;"></i> Admin
+              <% end %>
+            <% end %>
+            <%= link_to settings_path, class: "nav-link #{controller_name == 'settings' ? 'active' : ''}" do %>
+              <i data-lucide="settings" style="width: 1rem; height: 1rem; vertical-align: text-bottom;"></i> Settings
+            <% end %>
+            <span class="nav-user" style="color: var(--text-muted); margin: 0 10px; font-size: 0.9rem; display: flex; align-items: center; gap: 0.25rem;">
+              <i data-lucide="user-circle" style="width: 1.2rem; height: 1.2rem;"></i> <%= current_user.name %>
+            </span>
+            <%= button_to logout_path, method: :delete, class: "nav-link", style: "background: none; border: none; cursor: pointer; color: var(--text-secondary); display: flex; align-items: center; gap: 0.25rem;" do %>
+              <i data-lucide="log-out" style="width: 1rem; height: 1rem;"></i> Logout
+            <% end %>
+          <% else %>
+            <%= link_to login_path, class: "nav-link" do %>
+              <i data-lucide="log-in" style="width: 1rem; height: 1rem; margin-right: 0.25rem; vertical-align: text-bottom;"></i> Login
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </nav>
+
+    <main class="main-content">
+      <% if notice.present? %>
+        <div class="flash flash-notice" id="flash-notice">
+          <span><%= notice %></span>
+          <button class="flash-close" onclick="this.parentElement.remove()">✕</button>
+        </div>
+      <% end %>
+
+      <% if alert.present? %>
+        <div class="flash flash-alert" id="flash-alert">
+          <span><%= alert %></span>
+          <button class="flash-close" onclick="this.parentElement.remove()">✕</button>
+        </div>
+      <% end %>
+
+      <%= yield %>
+    </main>
+
+    <footer class="footer">
+      <p>&copy; <%= Date.today.year %> Nasflix — Ruby on Rails CRUD App</p>
+    </footer>
+  </body>
+</html>

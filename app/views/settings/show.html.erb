@@ -1,0 +1,45 @@
+<div class="page-wrapper">
+  <div class="page-header" style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2.2rem;">My Settings</h1>
+  </div>
+
+  <%= form_with model: @user, url: settings_path, method: :patch, class: "form-container", style: "margin: 0;" do |f| %>
+    <% if @user.errors.any? %>
+      <div class="form-errors">
+        <ul>
+          <% @user.errors.full_messages.each do |msg| %>
+            <li><%= msg %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="form-group">
+      <%= f.label :name %>
+      <%= f.text_field :name, class: "form-control" %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :email %>
+      <%= f.email_field :email, class: "form-control" %>
+    </div>
+
+    <hr class="section-divider">
+    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Leave password blank to keep your current one.</p>
+
+    <div class="form-row">
+      <div class="form-group">
+        <%= f.label :password, "New Password" %>
+        <%= f.password_field :password, class: "form-control", placeholder: "••••••••" %>
+      </div>
+      <div class="form-group">
+        <%= f.label :password_confirmation, "Confirm Password" %>
+        <%= f.password_field :password_confirmation, class: "form-control", placeholder: "••••••••" %>
+      </div>
+    </div>
+
+    <%= f.submit "Save Changes", class: "btn btn-primary" %>
+  <% end %>
+
+
+</div>

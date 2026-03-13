@@ -1,0 +1,38 @@
+<div class="page-wrapper">
+  <div class="page-header" style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2.2rem;">Manage Users</h1>
+    <%= link_to "Add User", new_user_path, class: "btn btn-primary" %>
+  </div>
+
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @users.each do |user| %>
+          <tr>
+            <td><strong><%= user.name %></strong></td>
+            <td><%= user.email %></td>
+            <td>
+              <span class="status-badge" style="background: var(--bg-input); border: 1px solid var(--border); color: var(--text-primary);">
+                <%= user.role.capitalize %>
+              </span>
+            </td>
+            <td class="table-actions">
+              <%= link_to "Edit", edit_user_path(user), class: "btn btn-small btn-secondary" %>
+              <% if user != current_user %>
+                <%= button_to "Delete", user_path(user), method: :delete, class: "btn btn-small btn-danger", data: { turbo_confirm: "Delete this user?" } %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

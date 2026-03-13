@@ -1,0 +1,11 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  movie: one
+  scheduled_at: 2026-03-09 10:45:31
+  notes: MyText
+
+two:
+  movie: two
+  scheduled_at: 2026-03-09 10:45:31
+  notes: MyText

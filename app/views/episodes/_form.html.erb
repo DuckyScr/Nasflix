@@ -1,0 +1,53 @@
+<%= form_with model: [@movie, episode], class: "form-container upload-form", html: { multipart: true } do |f| %>
+  <% if episode.errors.any? %>
+    <div class="form-errors">
+      <h3><%= pluralize(episode.errors.count, "error") %> prevented this episode from being saved:</h3>
+      <ul>
+        <% episode.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :title, "Episode Title" %>
+    <%= f.text_field :title, class: "form-control", placeholder: "e.g. Winter is Coming", required: true %>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <%= f.label :season_number, "Season" %>
+      <%= f.number_field :season_number, class: "form-control", min: 1, required: true %>
+    </div>
+    <div class="form-group">
+      <%= f.label :episode_number, "Episode Number" %>
+      <%= f.number_field :episode_number, class: "form-control", min: 1, required: true %>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :video, "Upload Episode Video (MP4, AVI, WebM, MKV)" %>
+    <div class="file-upload-wrapper">
+      <div class="file-upload-icon">📁</div>
+      <div class="file-upload-text">Drag & drop your video here or click to browse</div>
+      <%= f.file_field :video, class: "file-upload-input", accept: "video/mp4,video/x-msvideo,video/webm,video/x-matroska,video/mkv,video/quicktime,.mp4,.avi,.webm,.mkv,.mov", required: episode.new_record? %>
+      <div class="file-upload-name">No file selected</div>
+    </div>
+  </div>
+
+  <!-- Progress Bar UI -->
+  <div class="upload-progress-container" style="display: none;">
+    <div class="upload-progress-info">
+      <span class="upload-progress-text">Uploading...</span>
+      <span class="upload-progress-percentage">0%</span>
+    </div>
+    <div class="upload-progress-track">
+      <div class="upload-progress-bar"></div>
+    </div>
+  </div>
+
+  <%= f.submit class: "btn btn-primary submit-btn", style: "width: 100%; margin-top: 1rem;" %>
+<% end %>
+
+<%= render "shared/upload_script" %>

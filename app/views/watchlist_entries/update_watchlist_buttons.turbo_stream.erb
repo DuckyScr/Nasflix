@@ -1,0 +1,11 @@
+<%= turbo_stream.replace "watchlist_hero_btn_#{@movie.id}" do %>
+  <%= render "watchlist_entries/button", movie: @movie, watchlisted: @watchlisted, style: "hero" %>
+<% end %>
+
+<%= turbo_stream.replace "watchlist_card_btn_#{@movie.id}" do %>
+  <%= render "watchlist_entries/button", movie: @movie, watchlisted: @watchlisted, style: "card" %>
+<% end %>
+
+<%= turbo_stream.replace "watchlist_detail_btn_#{@movie.id}" do %>
+  <%= render "watchlist_entries/button", movie: @movie, watchlisted: @watchlisted, style: "detail" %>
+<% end %>

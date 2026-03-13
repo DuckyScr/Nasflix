@@ -1,0 +1,9 @@
+<div class="centered-page-wrapper" style="margin-top: 2rem;">
+  <div class="page-header">
+    <h1>Edit User: <%= @user.name %></h1>
+  </div>
+
+  <%= render "form", user: @user %>
+
+  <%= link_to "← Back to Users", users_path, class: "back-link" %>
+</div>
