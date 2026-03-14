@@ -59,13 +59,5 @@ production:
     <<: *default
     host: <%= ENV.fetch("DB_HOST", "db") %>
     database: nasflix_production
-    username: root
+    username: <%= ENV.fetch("MYSQL_USER", "nasflix") %>
     password: <%= ENV["NASFLIX_DATABASE_PASSWORD"] %>
-  cache:
-    <<: *primary_production
-    database: nasflix_production_cache
-    migrations_paths: db/cache_migrate
-  queue:
-    <<: *primary_production
-    database: nasflix_production_queue
-    migrations_paths: db/queue_migrate

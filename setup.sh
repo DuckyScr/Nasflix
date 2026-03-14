@@ -30,5 +30,8 @@ RAILS_MASTER_KEY=${RAILS_MASTER_KEY}
 SECRET_KEY_BASE=${SECRET_KEY_BASE}
 EOF
 
+# Remove old encrypted credentials (they were encrypted with old master key)
+rm -f config/credentials.yml.enc config/master.key
+
 echo "✓ Generated secure credentials in .env"
 echo "✓ Run 'docker compose up -d --build' to start Nasflix"

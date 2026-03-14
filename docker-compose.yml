@@ -7,6 +7,7 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE:-nasflix_production}
       MYSQL_USER: ${MYSQL_USER:-nasflix}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    command: --default-authentication-plugin=mysql_native_password
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
@@ -21,7 +22,7 @@ services:
     restart: always
     environment:
       - RAILS_ENV=production
-      - DATABASE_URL=mysql2://root:${MYSQL_ROOT_PASSWORD}@db/${MYSQL_DATABASE:-nasflix_production}
+      - DATABASE_URL=mysql2://${MYSQL_USER:-nasflix}:${MYSQL_PASSWORD}@db/${MYSQL_DATABASE:-nasflix_production}
       - NASFLIX_DATABASE_PASSWORD=${MYSQL_PASSWORD}
       - DB_HOST=db
       - RAILS_MASTER_KEY=${RAILS_MASTER_KEY}
